@@ -1,0 +1,110 @@
+.weekly-chart {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.weekly-chart__title {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.weekly-chart__bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 140px;
+  padding-bottom: 32px; /* room for day labels */
+}
+
+.weekly-chart__target-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-warning);
+  border-top: 1.5px dashed var(--color-warning);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.weekly-chart__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+  position: relative;
+}
+
+.weekly-chart__bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--color-primary);
+  min-height: 0;
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.weekly-chart__bar--today {
+  background: var(--color-primary-dark);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.weekly-chart__bar--over {
+  background: var(--color-warning);
+}
+
+.weekly-chart__bar--empty {
+  background: var(--color-line);
+  min-height: 3px;
+}
+
+.weekly-chart__bar-label {
+  position: absolute;
+  top: -20px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.weekly-chart__day-label {
+  position: absolute;
+  bottom: 0;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.weekly-chart__today-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.weekly-chart__legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 12px 0 0;
+}
+
+.weekly-chart__legend-line {
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--color-warning);
+  border-top: 1.5px dashed var(--color-warning);
+}

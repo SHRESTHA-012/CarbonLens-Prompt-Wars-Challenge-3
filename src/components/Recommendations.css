@@ -68,7 +68,7 @@
 .recs__saving {
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  color: var(--color-primary-dark);
+  color: var(--color-primary);
   white-space: nowrap;
 }
 

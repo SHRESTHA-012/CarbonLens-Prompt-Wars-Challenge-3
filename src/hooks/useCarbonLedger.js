@@ -7,6 +7,8 @@ import {
   summarizeEntries,
   findHighestImpactCategory,
   compareToBenchmark,
+  buildDailyHistory,
+  calculateStreak,
 } from "../lib/calculations";
 import { DAILY_BENCHMARK_KG, DAILY_TARGET_KG } from "../lib/emissionFactors";
 import {
@@ -19,18 +21,21 @@ const STORAGE_KEY = "carbonlens_state_v1";
 function loadInitialState() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { entries: [], completedActionIds: [] };
+    if (!raw) return { entries: [], completedActionIds: [], userTargetKg: DAILY_TARGET_KG, darkMode: false };
     const parsed = JSON.parse(raw);
     return {
       entries: Array.isArray(parsed.entries) ? parsed.entries : [],
       completedActionIds: Array.isArray(parsed.completedActionIds)
         ? parsed.completedActionIds
         : [],
+      userTargetKg:
+        typeof parsed.userTargetKg === "number" && parsed.userTargetKg > 0
+          ? parsed.userTargetKg
+          : DAILY_TARGET_KG,
+      darkMode: typeof parsed.darkMode === "boolean" ? parsed.darkMode : false,
     };
   } catch {
-    // Corrupted or inaccessible storage shouldn't crash the app —
-    // fall back to a clean slate.
-    return { entries: [], completedActionIds: [] };
+    return { entries: [], completedActionIds: [], userTargetKg: DAILY_TARGET_KG, darkMode: false };
   }
 }
 
@@ -147,6 +152,38 @@ export function useCarbonLedger() {
     });
   }, []);
 
+  const setUserTarget = useCallback((kg) => {
+    const parsed = Number(kg);
+    if (typeof parsed === "number" && Number.isFinite(parsed) && parsed > 0) {
+      setState((prev) => ({ ...prev, userTargetKg: Math.round(parsed * 10) / 10 }));
+    }
+  }, []);
+
+  const toggleDarkMode = useCallback(() => {
+    setState((prev) => ({ ...prev, darkMode: !prev.darkMode }));
+  }, []);
+
+  /**
+   * Export all entries as a CSV string and trigger a browser download.
+   * No external dependencies — uses a data URI.
+   */
+  const exportCSV = useCallback(() => {
+    const header = "id,category,label,quantity,unit,kgCO2e,timestamp";
+    const rows = state.entries.map((e) =>
+      [e.id, e.category, `"${e.label}"`, e.quantity, e.unit, e.kgCO2e, e.timestamp].join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `carbonlens-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [state.entries]);
+
   // Derived values are memoized off the raw entries/completedActionIds so
   // expensive recalculation only happens when the underlying data changes,
   // not on every render.
@@ -161,8 +198,8 @@ export function useCarbonLedger() {
   );
 
   const benchmarkComparison = useMemo(
-    () => compareToBenchmark(grandTotal, DAILY_BENCHMARK_KG, DAILY_TARGET_KG),
-    [grandTotal]
+    () => compareToBenchmark(grandTotal, DAILY_BENCHMARK_KG, state.userTargetKg),
+    [grandTotal, state.userTargetKg]
   );
 
   const recommendations = useMemo(
@@ -185,6 +222,16 @@ export function useCarbonLedger() {
     [grandTotal, totalSavings]
   );
 
+  const dailyHistory = useMemo(
+    () => buildDailyHistory(state.entries, 7),
+    [state.entries]
+  );
+
+  const streak = useMemo(
+    () => calculateStreak(dailyHistory, state.userTargetKg),
+    [dailyHistory, state.userTargetKg]
+  );
+
   return {
     entries: state.entries,
     completedActionIds: state.completedActionIds,
@@ -195,11 +242,18 @@ export function useCarbonLedger() {
     recommendations,
     totalSavings,
     netBalance,
+    dailyHistory,
+    streak,
+    userTargetKg: state.userTargetKg,
+    darkMode: state.darkMode,
     addTransportEntry,
     addEnergyEntry,
     addFoodEntry,
     addWasteEntry,
     removeEntry,
     toggleActionCompleted,
+    setUserTarget,
+    toggleDarkMode,
+    exportCSV,
   };
 }

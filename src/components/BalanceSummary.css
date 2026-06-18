@@ -1,9 +1,21 @@
 .balance {
   background: var(--color-bg-dark);
-  color: var(--color-bg);
+  color: var(--color-on-dark-card);
   border-radius: var(--radius);
-  padding: 32px 28px;
+  padding: 28px;
   box-shadow: var(--shadow-soft);
+}
+
+.balance__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.balance__main {
+  flex: 1;
 }
 
 .balance__eyebrow {
@@ -24,7 +36,7 @@
 
 .balance__number {
   font-family: var(--font-display);
-  font-size: 3.4rem;
+  font-size: 3.2rem;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -32,7 +44,7 @@
 
 .balance__unit {
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--color-sage);
 }
 
@@ -44,7 +56,6 @@
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
-  margin-bottom: 20px;
 }
 
 .balance__status-dot {
@@ -53,14 +64,39 @@
   border-radius: 50%;
 }
 
-.balance__status--good .balance__status-dot { background: #6FCF97; }
-.balance__status--ok .balance__status-dot { background: #8B9D83; }
-.balance__status--warn .balance__status-dot { background: #E0884A; }
+.balance__status--good .balance__status-dot  { background: var(--color-good); }
+.balance__status--ok .balance__status-dot    { background: var(--color-ok); }
+.balance__status--warn .balance__status-dot  { background: var(--color-warning); }
 .balance__status--neutral .balance__status-dot { background: #9AA59C; }
 
+/* Progress ring */
+.balance__ring-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+
+.balance__ring {
+  display: block;
+}
+
+.balance__ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
+}
+
+/* Breakdown */
 .balance__breakdown {
   display: flex;
-  gap: 28px;
+  flex-wrap: wrap;
+  gap: 8px 28px;
   margin: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   padding-top: 16px;
@@ -74,12 +110,28 @@
 
 .balance__breakdown-item dd {
   font-family: var(--font-mono);
-  font-size: 1.05rem;
+  font-size: 1rem;
   margin: 0;
 }
 
+.balance__target-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.balance__target-btn:hover {
+  opacity: 1;
+}
+
 @media (max-width: 480px) {
-  .balance__number {
-    font-size: 2.6rem;
-  }
+  .balance__number { font-size: 2.4rem; }
+  .balance__ring-wrap { width: 72px; height: 72px; }
 }

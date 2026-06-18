@@ -8,6 +8,40 @@
   margin-bottom: 32px;
 }
 
+.app__header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.app__header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.app__icon-btn {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.app__icon-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.app__icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .app__logo {
   font-size: 1.6rem;
   letter-spacing: -0.01em;

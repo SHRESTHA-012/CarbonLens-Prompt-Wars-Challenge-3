@@ -8,6 +8,8 @@ import {
   summarizeEntries,
   findHighestImpactCategory,
   compareToBenchmark,
+  buildDailyHistory,
+  calculateStreak,
 } from "../calculations";
 
 describe("isValidQuantity", () => {
@@ -153,5 +155,70 @@ describe("compareToBenchmark", () => {
   it("handles invalid input gracefully", () => {
     const result = compareToBenchmark(NaN, 11.5, 5.5);
     expect(result.status).toBe("unknown");
+  });
+});
+
+describe("buildDailyHistory", () => {
+  it("returns an array with `days` entries", () => {
+    const history = buildDailyHistory([], 7);
+    expect(history.length).toBe(7);
+  });
+
+  it("buckets entries into the correct day", () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const entries = [
+      { category: "food", kgCO2e: 3, timestamp: `${today}T10:00:00.000Z` },
+      { category: "transport", kgCO2e: 2, timestamp: `${today}T12:00:00.000Z` },
+    ];
+    const history = buildDailyHistory(entries, 7);
+    const todayBucket = history.find((h) => h.date === today);
+    expect(todayBucket).toBeDefined();
+    expect(todayBucket.total).toBeCloseTo(5, 2);
+  });
+
+  it("days outside the window are not included", () => {
+    const old = new Date();
+    old.setDate(old.getDate() - 30);
+    const entries = [{ category: "food", kgCO2e: 5, timestamp: old.toISOString() }];
+    const history = buildDailyHistory(entries, 7);
+    const total = history.reduce((s, d) => s + d.total, 0);
+    expect(total).toBe(0);
+  });
+
+  it("ignores malformed entries", () => {
+    const entries = [null, { category: "food", kgCO2e: NaN, timestamp: new Date().toISOString() }];
+    const history = buildDailyHistory(entries, 7);
+    const total = history.reduce((s, d) => s + d.total, 0);
+    expect(total).toBe(0);
+  });
+});
+
+describe("calculateStreak", () => {
+  it("returns 0 for empty history", () => {
+    expect(calculateStreak([], 5.5)).toBe(0);
+  });
+
+  it("counts consecutive days at or below target", () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push({ date: d.toISOString().slice(0, 10), total: i === 0 ? 3 : 4 });
+    }
+    // All past days (excluding today) are 4, below target 5.5 → streak = 6
+    expect(calculateStreak(days, 5.5)).toBe(6);
+  });
+
+  it("streak breaks on a day above target", () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      // 3 days ago was over target
+      days.push({ date: d.toISOString().slice(0, 10), total: i === 3 ? 12 : 4 });
+    }
+    expect(calculateStreak(days, 5.5)).toBe(2); // only last 2 days before today
   });
 });

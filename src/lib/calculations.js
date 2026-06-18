@@ -77,6 +77,60 @@ export function summarizeEntries(entries) {
 }
 
 /**
+ * Groups entries by ISO date (YYYY-MM-DD) and returns daily totals
+ * for the last `days` days including today. Days with no entries get 0.
+ * @param {Array} entries - all logged entries with a `timestamp` field
+ * @param {number} days - how many days to include (default 7)
+ * @returns {Array<{date: string, total: number}>}
+ */
+export function buildDailyHistory(entries, days = 7) {
+  // Build date keys for the last N days
+  const result = [];
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    result.push({ date: key, total: 0 });
+  }
+
+  const dateMap = Object.fromEntries(result.map((r) => [r.date, r]));
+
+  for (const entry of entries) {
+    if (!entry || !isValidQuantity(entry.kgCO2e)) continue;
+    const key = entry.timestamp ? entry.timestamp.slice(0, 10) : null;
+    if (key && dateMap[key]) {
+      dateMap[key].total = roundTo(dateMap[key].total + entry.kgCO2e, 2);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Calculates the current streak of consecutive days at or below a target.
+ * Counts backwards from yesterday (today is in progress so excluded).
+ * @param {Array<{date: string, total: number}>} dailyHistory
+ * @param {number} targetKg
+ * @returns {number}
+ */
+export function calculateStreak(dailyHistory, targetKg) {
+  if (!dailyHistory || dailyHistory.length === 0) return 0;
+  // Exclude today (last element) — day still in progress
+  const past = dailyHistory.slice(0, -1);
+  let streak = 0;
+  for (let i = past.length - 1; i >= 0; i--) {
+    if (past[i].total > 0 && past[i].total <= targetKg) {
+      streak++;
+    } else if (past[i].total > 0) {
+      break; // streak broken
+    }
+    // days with 0 entries are skipped (don't break or count)
+  }
+  return streak;
+}
+
+/**
  * Identifies the highest-emitting category from a totals object.
  * Returns null if all totals are zero (nothing logged yet).
  */

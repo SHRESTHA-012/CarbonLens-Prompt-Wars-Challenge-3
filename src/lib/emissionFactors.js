@@ -72,3 +72,11 @@ export const DAILY_BENCHMARK_KG = 11.5;
 // A commonly cited individual target consistent with global climate goals,
 // expressed as a daily budget (2 tonnes/year).
 export const DAILY_TARGET_KG = 5.5;
+
+// Category display metadata — single source of truth used across UI
+export const CATEGORY_META = {
+  transport: { label: "Transport", emoji: "🚗", color: "#4A90D9" },
+  energy:    { label: "Energy",    emoji: "⚡", color: "#E0884A" },
+  food:      { label: "Food",      emoji: "🍽️", color: "#6FCF97" },
+  waste:     { label: "Waste",     emoji: "♻️",  color: "#9B59B6" },
+};

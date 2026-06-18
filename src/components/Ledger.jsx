@@ -1,11 +1,5 @@
+import { CATEGORY_META } from "../lib/emissionFactors";
 import "./Ledger.css";
-
-const CATEGORY_META = {
-  transport: { label: "Transport", glyph: "T" },
-  energy: { label: "Energy", glyph: "E" },
-  food: { label: "Food", glyph: "F" },
-  waste: { label: "Waste", glyph: "W" },
-};
 
 function formatKg(value) {
   return `${value >= 0 ? "" : "−"}${Math.abs(value).toFixed(2)} kg`;
@@ -73,7 +67,7 @@ export function Ledger({ entries, completedActions, onRemoveEntry }) {
         </thead>
         <tbody>
           {ledgerLines.map((line) => {
-            const meta = CATEGORY_META[line.category] ?? { label: line.category, glyph: "?" };
+            const meta = CATEGORY_META[line.category] ?? { label: line.category, emoji: "?" };
             const isCredit = line.type === "credit";
             return (
               <tr key={line.id} className={isCredit ? "ledger__row--credit" : ""}>
@@ -94,7 +88,7 @@ export function Ledger({ entries, completedActions, onRemoveEntry }) {
                     aria-hidden="true"
                     title={meta.label}
                   >
-                    {meta.glyph}
+                    {meta.emoji ?? meta.label?.[0] ?? "?"}
                   </span>
                   <span className="sr-only">{meta.label}</span>
                 </td>
