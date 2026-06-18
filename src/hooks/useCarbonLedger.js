@@ -15,13 +15,27 @@ import {
   getPersonalizedRecommendations,
   calculateTotalSavings,
 } from "../lib/recommendations";
+import {
+  buildGeminiPrompt,
+  generateLocalFallbackInsights,
+} from "../lib/aiInsightsEngine";
 
 const STORAGE_KEY = "carbonlens_state_v1";
 
 function loadInitialState() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { entries: [], completedActionIds: [], userTargetKg: DAILY_TARGET_KG, darkMode: false };
+    if (!raw) {
+      return {
+        entries: [],
+        completedActionIds: [],
+        userTargetKg: DAILY_TARGET_KG,
+        darkMode: false,
+        geminiApiKey: "",
+        aiAdvice: "",
+        aiSource: "rules_fallback",
+      };
+    }
     const parsed = JSON.parse(raw);
     return {
       entries: Array.isArray(parsed.entries) ? parsed.entries : [],
@@ -33,9 +47,20 @@ function loadInitialState() {
           ? parsed.userTargetKg
           : DAILY_TARGET_KG,
       darkMode: typeof parsed.darkMode === "boolean" ? parsed.darkMode : false,
+      geminiApiKey: typeof parsed.geminiApiKey === "string" ? parsed.geminiApiKey : "",
+      aiAdvice: typeof parsed.aiAdvice === "string" ? parsed.aiAdvice : "",
+      aiSource: typeof parsed.aiSource === "string" ? parsed.aiSource : "rules_fallback",
     };
   } catch {
-    return { entries: [], completedActionIds: [], userTargetKg: DAILY_TARGET_KG, darkMode: false };
+    return {
+      entries: [],
+      completedActionIds: [],
+      userTargetKg: DAILY_TARGET_KG,
+      darkMode: false,
+      geminiApiKey: "",
+      aiAdvice: "",
+      aiSource: "rules_fallback",
+    };
   }
 }
 
@@ -47,13 +72,13 @@ function nextEntryId() {
 
 export function useCarbonLedger() {
   const [state, setState] = useState(loadInitialState);
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   useEffect(() => {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
-      // Storage may be full or unavailable (e.g. private browsing) —
-      // fail silently rather than breaking the app's runtime behavior.
+      // Storage may be full or unavailable (e.g. private browsing)
     }
   }, [state]);
 
@@ -163,9 +188,20 @@ export function useCarbonLedger() {
     setState((prev) => ({ ...prev, darkMode: !prev.darkMode }));
   }, []);
 
+  const setGeminiApiKey = useCallback((key) => {
+    setState((prev) => ({ ...prev, geminiApiKey: key }));
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      entries: [],
+      completedActionIds: [],
+    }));
+  }, []);
+
   /**
    * Export all entries as a CSV string and trigger a browser download.
-   * No external dependencies — uses a data URI.
    */
   const exportCSV = useCallback(() => {
     const header = "id,category,label,quantity,unit,kgCO2e,timestamp";
@@ -184,9 +220,7 @@ export function useCarbonLedger() {
     URL.revokeObjectURL(url);
   }, [state.entries]);
 
-  // Derived values are memoized off the raw entries/completedActionIds so
-  // expensive recalculation only happens when the underlying data changes,
-  // not on every render.
+  // Derived values are memoized
   const { totals, grandTotal } = useMemo(
     () => summarizeEntries(state.entries),
     [state.entries]
@@ -232,6 +266,103 @@ export function useCarbonLedger() {
     [dailyHistory, state.userTargetKg]
   );
 
+  // Generate / trigger dynamic Gemini AI insights
+  const generateAIInsights = useCallback(async (customApiKey = null) => {
+    const keyToUse = customApiKey !== null ? customApiKey : state.geminiApiKey;
+
+    if (!keyToUse || keyToUse.trim() === "") {
+      const fallbackInsights = generateLocalFallbackInsights(
+        totals,
+        highestImpactCategory,
+        state.userTargetKg,
+        streak
+      );
+      setState((prev) => ({
+        ...prev,
+        aiAdvice: fallbackInsights,
+        aiSource: "rules_fallback",
+      }));
+      return;
+    }
+
+    setIsGeneratingInsights(true);
+    try {
+      const promptText = buildGeminiPrompt(
+        totals,
+        highestImpactCategory,
+        state.userTargetKg,
+        streak
+      );
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToUse}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: {
+            maxOutputTokens: 400,
+            temperature: 0.7,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (text) {
+        setState((prev) => ({
+          ...prev,
+          aiAdvice: text.trim(),
+          aiSource: "gemini",
+        }));
+      } else {
+        throw new Error("No text content returned from Gemini model");
+      }
+    } catch (err) {
+      console.warn("AI generation failed, degrading to rule engine fallback:", err);
+      const fallbackInsights = generateLocalFallbackInsights(
+        totals,
+        highestImpactCategory,
+        state.userTargetKg,
+        streak
+      );
+      setState((prev) => ({
+        ...prev,
+        aiAdvice: fallbackInsights,
+        aiSource: "rules_fallback",
+      }));
+    } finally {
+      setIsGeneratingInsights(false);
+    }
+  }, [state.geminiApiKey, state.userTargetKg, totals, highestImpactCategory, streak]);
+
+  // Keep local fallback reactive when entries change (if using rules)
+  useEffect(() => {
+    if (state.aiSource === "rules_fallback" || !state.geminiApiKey) {
+      const fallbackInsights = generateLocalFallbackInsights(
+        totals,
+        highestImpactCategory,
+        state.userTargetKg,
+        streak
+      );
+      setState((prev) => {
+        if (prev.aiAdvice === fallbackInsights) return prev;
+        return {
+          ...prev,
+          aiAdvice: fallbackInsights,
+          aiSource: "rules_fallback",
+        };
+      });
+    }
+  }, [totals, highestImpactCategory, state.userTargetKg, streak, state.aiSource, state.geminiApiKey]);
+
   return {
     entries: state.entries,
     completedActionIds: state.completedActionIds,
@@ -246,6 +377,10 @@ export function useCarbonLedger() {
     streak,
     userTargetKg: state.userTargetKg,
     darkMode: state.darkMode,
+    geminiApiKey: state.geminiApiKey,
+    aiAdvice: state.aiAdvice,
+    aiSource: state.aiSource,
+    isGeneratingInsights,
     addTransportEntry,
     addEnergyEntry,
     addFoodEntry,
@@ -254,6 +389,10 @@ export function useCarbonLedger() {
     toggleActionCompleted,
     setUserTarget,
     toggleDarkMode,
+    setGeminiApiKey,
+    generateAIInsights,
+    clearHistory,
     exportCSV,
   };
 }
+

@@ -1,44 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
-  --color-bg: #F7F4ED;
-  --color-bg-dark: #1A2E22;
-  --color-text: #1A2E22;
-  --color-text-muted: #5C6B5F;
-  --color-primary: #3D7858;
-  --color-primary-dark: #2C5A40;
-  --color-warning: #D4632F;
-  --color-good: #6FCF97;
-  --color-ok: #8B9D83;
-  --color-sage: #8B9D83;
-  --color-line: #D8D2C2;
-  --color-card: #FFFFFF;
+  --color-bg: hsl(140, 15%, 96%);
+  --color-bg-dark: hsl(145, 30%, 15%);
+  --color-text: hsl(145, 30%, 12%);
+  --color-text-muted: hsl(145, 12%, 40%);
+  --color-primary: hsl(145, 45%, 33%);
+  --color-primary-dark: hsl(145, 45%, 24%);
+  --color-warning: hsl(24, 85%, 48%);
+  --color-good: hsl(145, 50%, 42%);
+  --color-ok: hsl(85, 25%, 42%);
+  --color-sage: hsl(145, 15%, 65%);
+  --color-line: rgba(13, 27, 18, 0.08);
+  --color-card: rgba(255, 255, 255, 0.82);
+  --color-shadow: rgba(13, 27, 18, 0.04);
   /* Text on the dark balance card — light cream in both modes */
-  --color-on-dark-card: #F7F4ED;
+  --color-on-dark-card: hsl(140, 15%, 96%);
 
   --font-display: "Fraunces", Georgia, serif;
-  --font-mono: "JetBrains Mono", "Courier New", monospace;
-  --font-body: "Inter", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-body: "Outfit", sans-serif;
 
-  --radius: 6px;
-  --shadow-soft: 0 1px 2px rgba(26, 46, 34, 0.06), 0 2px 8px rgba(26, 46, 34, 0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow-soft: 0 4px 24px var(--color-shadow), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --blur: blur(16px);
 }
 
 /* Dark mode overrides — toggled via class on <html> */
 html.dark {
-  --color-bg: #111C15;
-  --color-bg-dark: #0D1710;
-  --color-text: #E8F0E9;
-  --color-text-muted: #7A9A80;
-  --color-primary: #5FA87A;
-  --color-primary-dark: #4A8A62;
-  --color-warning: #E0884A;
-  --color-good: #6FCF97;
-  --color-ok: #8B9D83;
-  --color-sage: #7A9A80;
-  --color-line: #2A3E2F;
-  --color-card: #1A2A1F;
-  /* Balance card sits on --color-bg-dark; in dark mode that's very dark,
-     so we need a light text colour that doesn't depend on --color-bg */
-  --color-on-dark-card: #E8F0E9;
+  --color-bg: hsl(145, 24%, 7%);
+  --color-bg-dark: hsl(145, 30%, 5%);
+  --color-text: hsl(145, 20%, 93%);
+  --color-text-muted: hsl(145, 12%, 65%);
+  --color-primary: hsl(145, 42%, 52%);
+  --color-primary-dark: hsl(145, 42%, 42%);
+  --color-warning: hsl(28, 85%, 58%);
+  --color-good: hsl(145, 52%, 48%);
+  --color-ok: hsl(85, 30%, 52%);
+  --color-sage: hsl(145, 12%, 50%);
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-card: rgba(24, 38, 29, 0.72);
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-on-dark-card: hsl(145, 20%, 93%);
 }
 
 * {
@@ -48,40 +53,50 @@ html.dark {
 html, body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
 }
 
 body {
   background: var(--color-bg);
+  background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
   min-height: 100vh;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 600;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 button {
   font-family: var(--font-body);
   cursor: pointer;
+  border-radius: var(--radius-sm);
+  outline: none;
 }
 
 /* Visible keyboard focus for accessibility — never suppressed */
 :focus-visible {
   outline: 3px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 2px;
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 a {
+  color: var(--color-primary);
+  transition: var(--transition);
+}
+
+a:hover {
   color: var(--color-primary-dark);
 }
 
@@ -123,3 +138,4 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+

@@ -1,9 +1,16 @@
 .balance {
-  background: var(--color-bg-dark);
+  background: linear-gradient(135deg, var(--color-bg-dark), hsl(145, 30%, 10%));
   color: var(--color-on-dark-card);
   border-radius: var(--radius);
-  padding: 28px;
-  box-shadow: var(--shadow-soft);
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(13, 27, 18, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: var(--transition);
+}
+
+.balance:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(13, 27, 18, 0.22);
 }
 
 .balance__top {
@@ -11,7 +18,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .balance__main {
@@ -19,32 +26,32 @@
 }
 
 .balance__eyebrow {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--color-sage);
-  font-weight: 600;
-  margin-bottom: 10px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 .balance__figure {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .balance__number {
   font-family: var(--font-display);
-  font-size: 3.2rem;
+  font-size: 3.4rem;
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .balance__unit {
   font-family: var(--font-mono);
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: var(--color-sage);
 }
 
@@ -52,10 +59,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.88rem;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .balance__status-dot {
@@ -88,30 +97,33 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.75);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* Breakdown */
 .balance__breakdown {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 28px;
+  gap: 12px 32px;
   margin: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 20px;
 }
 
 .balance__breakdown-item dt {
   font-size: 0.75rem;
   color: var(--color-sage);
   margin-bottom: 4px;
+  font-weight: 500;
 }
 
 .balance__breakdown-item dd {
   font-family: var(--font-mono);
   font-size: 1rem;
   margin: 0;
+  font-weight: 500;
 }
 
 .balance__target-btn {
@@ -122,16 +134,22 @@
   font-size: 1rem;
   padding: 0;
   text-decoration: underline;
-  text-decoration-style: dotted;
+  text-decoration-style: dashed;
   opacity: 0.85;
   cursor: pointer;
+  transition: var(--transition);
 }
 
 .balance__target-btn:hover {
   opacity: 1;
+  color: var(--color-good);
 }
 
 @media (max-width: 480px) {
-  .balance__number { font-size: 2.4rem; }
-  .balance__ring-wrap { width: 72px; height: 72px; }
+  .balance {
+    padding: 24px;
+  }
+  .balance__number { font-size: 2.8rem; }
+  .balance__ring-wrap { width: 76px; height: 76px; }
 }
+

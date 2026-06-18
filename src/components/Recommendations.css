@@ -4,22 +4,30 @@
   border-radius: var(--radius);
   padding: 24px;
   box-shadow: var(--shadow-soft);
+  transition: var(--transition);
+}
+
+.recs:hover {
+  box-shadow: 0 6px 30px var(--color-shadow);
 }
 
 .recs__title {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   margin-bottom: 6px;
+  font-family: var(--font-display);
 }
 
 .recs__context {
   color: var(--color-text-muted);
-  font-size: 0.9rem;
-  margin: 0 0 18px;
+  font-size: 0.88rem;
+  margin: 0 0 20px;
+  line-height: 1.5;
 }
 
 .recs__empty-body {
   color: var(--color-text-muted);
   margin: 0;
+  font-size: 0.9rem;
 }
 
 .recs__list {
@@ -36,53 +44,78 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 14px 16px;
+  padding: 16px;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.005);
+  transition: var(--transition);
   flex-wrap: wrap;
+}
+
+html.dark .recs__item {
+  background: rgba(255, 255, 255, 0.005);
+}
+
+.recs__item:hover {
+  border-color: var(--color-primary);
+  transform: translateX(2px);
 }
 
 .recs__item-main {
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
 }
 
 .recs__item-title {
   font-weight: 600;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   font-size: 0.95rem;
+  color: var(--color-text);
 }
 
 .recs__item-desc {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--color-text-muted);
+  line-height: 1.4;
 }
 
 .recs__item-side {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  margin-left: auto;
 }
 
 .recs__saving {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--color-primary);
+  font-size: 0.82rem;
+  color: var(--color-good);
   white-space: nowrap;
+  font-weight: 600;
+  background: rgba(95, 168, 122, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .recs__complete-btn {
   background: var(--color-primary);
   color: white;
   border: none;
-  padding: 8px 14px;
-  border-radius: var(--radius);
-  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
+  transition: var(--transition);
 }
 
 .recs__complete-btn:hover {
   background: var(--color-primary-dark);
+  transform: translateY(-1px);
 }
+
+.recs__complete-btn:active {
+  transform: translateY(0);
+}
+
