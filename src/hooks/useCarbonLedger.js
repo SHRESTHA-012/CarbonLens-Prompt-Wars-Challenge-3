@@ -266,67 +266,98 @@ export function useCarbonLedger() {
     [dailyHistory, state.userTargetKg]
   );
 
-  // Generate / trigger dynamic Gemini AI insights
-  const generateAIInsights = useCallback(async (customApiKey = null) => {
-    const keyToUse = customApiKey !== null ? customApiKey : state.geminiApiKey;
-
-    if (!keyToUse || keyToUse.trim() === "") {
-      const fallbackInsights = generateLocalFallbackInsights(
-        totals,
-        highestImpactCategory,
-        state.userTargetKg,
-        streak
-      );
-      setState((prev) => ({
-        ...prev,
-        aiAdvice: fallbackInsights,
-        aiSource: "rules_fallback",
-      }));
-      return;
+  // Device identity generator
+  const getOrCreateDeviceId = useCallback(() => {
+    let id = window.localStorage.getItem("carbonlens_device_id");
+    if (!id) {
+      id = `device_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
+      window.localStorage.setItem("carbonlens_device_id", id);
     }
+    return id;
+  }, []);
 
-    setIsGeneratingInsights(true);
+  // Sync ledger entries database snapshots to backend
+  const syncLedgerWithBackend = useCallback(async (entriesToSync) => {
+    const deviceId = getOrCreateDeviceId();
     try {
-      const promptText = buildGeminiPrompt(
-        totals,
-        highestImpactCategory,
-        state.userTargetKg,
-        streak
-      );
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToUse}`;
-
-      const response = await fetch(url, {
+      await fetch("/api/entries", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          generationConfig: {
-            maxOutputTokens: 400,
-            temperature: 0.7,
-          },
+          deviceId,
+          entries: entriesToSync,
+        }),
+      });
+    } catch (err) {
+      console.warn("Backend database sync failed, using localStorage only:", err);
+    }
+  }, [getOrCreateDeviceId]);
+
+  // Push updates to backend database snapshot
+  useEffect(() => {
+    syncLedgerWithBackend(state.entries);
+  }, [state.entries, syncLedgerWithBackend]);
+
+  // Load history snapshot from backend database on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      const deviceId = getOrCreateDeviceId();
+      try {
+        const response = await fetch(`/api/entries/${deviceId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.entries && data.entries.length > 0 && state.entries.length === 0) {
+            setState((prev) => ({
+              ...prev,
+              entries: data.entries,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load historical data from backend:", err);
+      }
+    };
+    loadHistory();
+  }, [getOrCreateDeviceId]);
+
+  // Generate / trigger dynamic Gemini AI insights from backend API
+  const generateAIInsights = useCallback(async (customApiKey = null) => {
+    const keyToUse = customApiKey !== null ? customApiKey : state.geminiApiKey;
+
+    setIsGeneratingInsights(true);
+    try {
+      const response = await fetch("/api/insights", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          totals,
+          highestImpactCategory,
+          userTargetKg: state.userTargetKg,
+          streak,
+          apiKey: keyToUse
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Gemini API Error: ${response.status}`);
+        throw new Error(`Server returned error status: ${response.status}`);
       }
 
       const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (text) {
+      if (data.advice) {
         setState((prev) => ({
           ...prev,
-          aiAdvice: text.trim(),
-          aiSource: "gemini",
+          aiAdvice: data.advice,
+          aiSource: data.source || "rules_fallback",
         }));
       } else {
-        throw new Error("No text content returned from Gemini model");
+        throw new Error("Empty advice returned from server");
       }
     } catch (err) {
-      console.warn("AI generation failed, degrading to rule engine fallback:", err);
+      console.warn("Server-side AI insights request failed, degrading to local client fallback:", err);
       const fallbackInsights = generateLocalFallbackInsights(
         totals,
         highestImpactCategory,
