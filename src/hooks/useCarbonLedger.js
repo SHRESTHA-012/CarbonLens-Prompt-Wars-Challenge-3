@@ -15,6 +15,8 @@ import {
   getPersonalizedRecommendations,
   calculateTotalSavings,
 } from "../lib/recommendations";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 import {
   
   generateLocalFallbackInsights,
@@ -280,7 +282,7 @@ export function useCarbonLedger() {
   const syncLedgerWithBackend = useCallback(async (entriesToSync) => {
     const deviceId = getOrCreateDeviceId();
     try {
-      await fetch("/api/entries", {
+      await fetch(`${API_URL}/api/entries`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -305,7 +307,7 @@ export function useCarbonLedger() {
     const loadHistory = async () => {
       const deviceId = getOrCreateDeviceId();
       try {
-        const response = await fetch(`/api/entries/${deviceId}`);
+        const response = await fetch(`${API_URL}/api/entries/${deviceId}`);
         if (response.ok) {
           const data = await response.json();
           if (data.entries && data.entries.length > 0 && state.entries.length === 0) {
@@ -320,7 +322,7 @@ export function useCarbonLedger() {
       }
     };
     loadHistory();
-  }, [getOrCreateDeviceId]);
+  }, [getOrCreateDeviceId]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional mount-only load; state.entries.length is a one-time guard, not a trigger
 
   // Generate / trigger dynamic Gemini AI insights from backend API
   const generateAIInsights = useCallback(async (customApiKey = null) => {
@@ -328,7 +330,7 @@ export function useCarbonLedger() {
 
     setIsGeneratingInsights(true);
     try {
-      const response = await fetch("/api/insights", {
+      const response = await fetch(`${API_URL}/api/insights`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -375,24 +377,17 @@ export function useCarbonLedger() {
   }, [state.geminiApiKey, state.userTargetKg, totals, highestImpactCategory, streak]);
 
   // Keep local fallback reactive when entries change (if using rules)
-  useEffect(() => {
-    if (state.aiSource === "rules_fallback" || !state.geminiApiKey) {
-      const fallbackInsights = generateLocalFallbackInsights(
-        totals,
-        highestImpactCategory,
-        state.userTargetKg,
-        streak
-      );
-      setState((prev) => {
-        if (prev.aiAdvice === fallbackInsights) return prev;
-        return {
-          ...prev,
-          aiAdvice: fallbackInsights,
-          aiSource: "rules_fallback",
-        };
-      });
-    }
-  }, [totals, highestImpactCategory, state.userTargetKg, streak, state.aiSource, state.geminiApiKey]);
+  // Derive local fallback advice when entries change (if using rules)
+  const usingRulesFallback = state.aiSource === "rules_fallback" || !state.geminiApiKey;
+  const fallbackAdvice = useMemo(() => {
+    if (!usingRulesFallback) return null;
+    return generateLocalFallbackInsights(
+      totals,
+      highestImpactCategory,
+      state.userTargetKg,
+      streak
+    );
+  }, [usingRulesFallback, totals, highestImpactCategory, state.userTargetKg, streak]);
 
   return {
     entries: state.entries,
@@ -409,7 +404,7 @@ export function useCarbonLedger() {
     userTargetKg: state.userTargetKg,
     darkMode: state.darkMode,
     geminiApiKey: state.geminiApiKey,
-    aiAdvice: state.aiAdvice,
+    aiAdvice: usingRulesFallback ? fallbackAdvice : state.aiAdvice,
     aiSource: state.aiSource,
     isGeneratingInsights,
     addTransportEntry,
