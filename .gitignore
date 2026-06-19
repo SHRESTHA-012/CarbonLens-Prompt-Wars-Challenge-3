@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/credentials.json
+backend/.env
+backend/database.json

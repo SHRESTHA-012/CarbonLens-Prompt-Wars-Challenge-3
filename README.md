@@ -119,7 +119,7 @@ npm run dev      # proxies /api to http://localhost:8000
 # Frontend — 58 tests
 npm test
 
-# Backend — 4 tests
+# Backend — 8 tests
 cd backend
 pytest -v
 ```

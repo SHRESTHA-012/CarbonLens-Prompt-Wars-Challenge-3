@@ -16,7 +16,7 @@ import {
   calculateTotalSavings,
 } from "../lib/recommendations";
 import {
-  buildGeminiPrompt,
+  
   generateLocalFallbackInsights,
 } from "../lib/aiInsightsEngine";
 

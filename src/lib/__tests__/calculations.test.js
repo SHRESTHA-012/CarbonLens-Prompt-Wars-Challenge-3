@@ -199,7 +199,6 @@ describe("calculateStreak", () => {
   });
 
   it("counts consecutive days at or below target", () => {
-    const today = new Date().toISOString().slice(0, 10);
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -211,7 +210,6 @@ describe("calculateStreak", () => {
   });
 
   it("streak breaks on a day above target", () => {
-    const today = new Date().toISOString().slice(0, 10);
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();

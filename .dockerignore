@@ -1,0 +1,11 @@
+node_modules
+.venv
+dist
+__pycache__
+*.pyc
+.pytest_cache
+.git
+.env
+backend/.env
+backend/credentials.json
+backend/database.json
